@@ -18,7 +18,7 @@ from app.schemas.extraction_schema import ExtractionResponse
 
 router = APIRouter(prefix="/internal/v1", tags=["extraction"])
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("pdf_extraction")
 
 MAX_PDF_SIZE_BYTES = int(
     os.getenv("MAX_PDF_SIZE_BYTES", str(10 * 1024 * 1024))
@@ -83,15 +83,17 @@ async def extract_pdf_text(
     pdf_bytes = bytes(content)
 
     logger.info(
-        "Extracting PDF: filename=%s size_bytes=%s",
-        filename,
-        len(pdf_bytes),
+        "pdf_extraction_started",
+        extra={"size_bytes": len(pdf_bytes)},
     )
 
     try:
         extracted_text = service.extract_text(pdf_bytes)
     except ValueError as error:
-        logger.warning("PDF extraction failed: %s", error)
+        logger.warning(
+            "pdf_extraction_failed",
+            extra={"error_type": type(error).__name__},
+        )
         raise HTTPException(
             status_code=400,
             detail=str(error),
